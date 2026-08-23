@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saját webböngésző</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #121212;
+    color: white;
+}
+
+header {
+    background: #1e1e1e;
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-bottom: 1px solid #333;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#urlInput {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #2b2b2b;
+    color: white;
+    font-size: 15px;
+}
+
+button {
+    padding: 11px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #5865f2;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+button:hover {
+    background: #4752c4;
+}
+
+.container {
+    padding: 25px;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+.add-box {
+    background: #1e1e1e;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.add-box input {
+    padding: 12px;
+    margin-right: 8px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #2b2b2b;
+    color: white;
+    outline: none;
+}
+
+#linkName {
+    width: 220px;
+}
+
+#linkUrl {
+    width: 400px;
+}
+
+#search {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 20px;
+    border: none;
+    border-radius: 8px;
+    background: #1e1e1e;
+    color: white;
+    outline: none;
+}
+
+.links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.link-card {
+    background: #1e1e1e;
+    padding: 18px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.link-card:hover {
+    transform: translateY(-3px);
+    background: #252525;
+}
+
+.link-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.link-address {
+    font-size: 12px;
+    color: #aaa;
+    word-break: break-all;
+    margin-bottom: 15px;
+}
+
+.open-btn {
+    background: #23a559;
+}
+
+.delete-btn {
+    background: #ed4245;
+    margin-left: 5px;
+}
+
+.empty {
+    color: #888;
+    text-align: center;
+    padding: 40px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">🌐 Saját Böngésző</div>
+
+    <input
+        id="urlInput"
+        type="text"
+        placeholder="Írj be egy webcímet..."
+    >
+
+    <button onclick="goToUrl()">Megnyitás</button>
+</header>
+
+<div class="container">
+
+    <h1>🔗 Saját linkjeim</h1>
+
+    <div class="add-box">
+
+        <input
+            id="linkName"
+            type="text"
+            placeholder="Link neve"
+        >
+
+        <input
+            id="linkUrl"
+            type="text"
+            placeholder="https://példa.hu"
+        >
+
+        <button onclick="addLink()">Link hozzáadása</button>
+
+    </div>
+
+    <input
+        id="search"
+        type="text"
+        placeholder="🔎 Keresés a linkjeid között..."
+        oninput="searchLinks()"
+    >
+
+    <div id="links" class="links"></div>
+
+</div>
+
+<script>
+
+let links = JSON.parse(localStorage.getItem("sajatLinkek")) || [];
+
+function saveLinks() {
+    localStorage.setItem("sajatLinkek", JSON.stringify(links));
+}
+
+function addLink() {
+
+    const name = document.getElementById("linkName").value.trim();
+    let url = document.getElementById("linkUrl").value.trim();
+
+    if (name === "" || url === "") {
+        alert("Írd be a link nevét és a webcímet!");
+        return;
+    }
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
+
+    links.push({
+        name: name,
+        url: url
+    });
+
+    saveLinks();
+
+    document.getElementById("linkName").value = "";
+    document.getElementById("linkUrl").value = "";
+
+    displayLinks();
+}
+
+function displayLinks(list = links) {
+
+    const container = document.getElementById("links");
+
+    container.innerHTML = "";
+
+    if (list.length === 0) {
+        container.innerHTML =
+            '<div class="empty">Még nincs elmentett linked.</div>';
+
+        return;
+    }
+
+    list.forEach((link, index) => {
+
+        const card = document.createElement("div");
+
+        card.className = "link-card";
+
+        card.innerHTML = `
+            <div class="link-title">
+                ${escapeHtml(link.name)}
+            </div>
+
+            <div class="link-address">
+                ${escapeHtml(link.url)}
+            </div>
+
+            <button
+                class="open-btn"
+                onclick="openLink(${index})">
+                Megnyitás
+            </button>
+
+            <button
+                class="delete-btn"
+                onclick="deleteLink(${index})">
+                Törlés
+            </button>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+function openLink(index) {
+
+    window.open(
+        links[index].url,
+        "_blank"
+    );
+}
+
+function deleteLink(index) {
+
+    if (confirm("Biztosan törlöd ezt a linket?")) {
+
+        links.splice(index, 1);
+
+        saveLinks();
+
+        displayLinks();
+    }
+}
+
+function searchLinks() {
+
+    const search =
+        document.getElementById("search")
+        .value
+        .toLowerCase();
+
+    const filtered = links.filter(link =>
+        link.name.toLowerCase().includes(search) ||
+        link.url.toLowerCase().includes(search)
+    );
+
+    displayLinks(filtered);
+}
+
+function goToUrl() {
+
+    let url =
+        document.getElementById("urlInput")
+        .value
+        .trim();
+
+    if (url === "") {
+        return;
+    }
+
+    if (!url.startsWith("http://") &&
+        !url.startsWith("https://")) {
+
+        url = "https://" + url;
+    }
+
+    window.open(url, "_blank");
+}
+
+function escapeHtml(text) {
+
+    const div = document.createElement("div");
+
+    div.textContent = text;
+
+    return div.innerHTML;
+}
+
+document
+    .getElementById("urlInput")
+    .addEventListener("keydown", function(event) {
+
+        if (event.key === "Enter") {
+            goToUrl();
+        }
+
+    });
+
+displayLinks();
+
+</script>
+
+</body>
+</html>
